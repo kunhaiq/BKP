@@ -115,6 +115,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_knnx_nanoflann_rcpp
+List get_knnx_nanoflann_rcpp(NumericMatrix data, NumericMatrix query, int k);
+RcppExport SEXP _BKP_get_knnx_nanoflann_rcpp(SEXP dataSEXP, SEXP querySEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type query(querySEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_knnx_nanoflann_rcpp(data, query, k));
+    return rcpp_result_gen;
+END_RCPP
+}
 // kernel_matrix_rcpp
 arma::mat kernel_matrix_rcpp(SEXP X, SEXP Xprime, NumericVector theta, std::string kernel, bool isotropic);
 RcppExport SEXP _BKP_kernel_matrix_rcpp(SEXP XSEXP, SEXP XprimeSEXP, SEXP thetaSEXP, SEXP kernelSEXP, SEXP isotropicSEXP) {
@@ -239,6 +252,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BKP_get_prior_dkp_noninformative_rcpp", (DL_FUNC) &_BKP_get_prior_dkp_noninformative_rcpp, 2},
     {"_BKP_get_prior_dkp_fixed_rcpp", (DL_FUNC) &_BKP_get_prior_dkp_fixed_rcpp, 3},
     {"_BKP_get_prior_dkp_adaptive_rcpp", (DL_FUNC) &_BKP_get_prior_dkp_adaptive_rcpp, 3},
+    {"_BKP_get_knnx_nanoflann_rcpp", (DL_FUNC) &_BKP_get_knnx_nanoflann_rcpp, 3},
     {"_BKP_kernel_matrix_rcpp", (DL_FUNC) &_BKP_kernel_matrix_rcpp, 5},
     {"_BKP_loss_fun_brier_bkp_rcpp", (DL_FUNC) &_BKP_loss_fun_brier_bkp_rcpp, 5},
     {"_BKP_loss_fun_logloss_bkp_rcpp", (DL_FUNC) &_BKP_loss_fun_logloss_bkp_rcpp, 5},

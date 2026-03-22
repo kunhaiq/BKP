@@ -27,8 +27,7 @@ Imports:
     optimx,
     rlang,
     tgp,
-    Rcpp,
-    FNN
+    Rcpp
 Suggests: knitr, mlbench, testthat (>= 3.0.0)
 Config/testthat/edition: 3
 LinkingTo: 
