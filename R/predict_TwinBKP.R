@@ -44,7 +44,6 @@
 #'
 #' @seealso \code{\link{fit_TwinBKP}}
 #' @examples
-#' if (requireNamespace("FNN", quietly = TRUE)) {
 #'
 #'   # ============================================================== #
 #'   # ======================= TwinBKP Examples ====================== #
@@ -107,7 +106,7 @@
 #'   x2 <- seq(Xbounds[2, 1], Xbounds[2, 2], length.out = 8)
 #'   Xnew <- expand.grid(x1 = x1, x2 = x2)
 #'   predict(model2, Xnew = Xnew, l = 12)
-#' }
+#' 
 #' @importFrom stats optimise
 #' @export
 predict.TwinBKP <- function(
@@ -120,33 +119,27 @@ predict.TwinBKP <- function(
     ...
 ) {
 
-  # ======================================================
-  # 第零步：从 object 中提取训练时保存的所有信息
-  # ======================================================
 
-  Xnorm        <- object$Xnorm         # 全训练集归一化坐标 (n x d)
-  y            <- object$y             # 全训练集响应 (n x 1)
-  m_train      <- object$m             # 全训练集试验次数 (n x 1)
-  Xbounds      <- object$Xbounds       # 输入空间边界 (d x 2)
-  global_idx   <- object$global_idx    # 全局点行索引
-  Xnorm_global <- object$Xnorm_global  # 全局点归一化坐标
+  Xnorm        <- object$Xnorm
+  y            <- object$y
+  m_train      <- object$m
+  Xbounds      <- object$Xbounds
+  global_idx   <- object$global_idx
+  Xnorm_global <- object$Xnorm_global
   y_global     <- object$y_global
   m_global     <- object$m_global
-  theta_global <- object$theta_global  # 全局核超参数
-  kernel       <- object$kernel        # 核函数类型
+  theta_global <- object$theta_global
+  kernel       <- object$kernel
   isotropic    <- object$isotropic
   prior        <- object$prior
   r0           <- object$r0
   p0           <- object$p0
   loss_type    <- object$loss
-  g            <- object$g             # 全局点数量
+  g            <- object$g
 
-  n <- nrow(Xnorm)   # 总训练样本量
-  d <- ncol(Xnorm)   # 输入维度
-
-  # ======================================================
-  # 第一步：输入检查与归一化
-  # ======================================================
+  n <- nrow(Xnorm)
+  d <- ncol(Xnorm)
+ 
 
   if (is.null(nrow(Xnew))) Xnew <- matrix(Xnew, nrow = 1)
   Xnew <- as.matrix(Xnew)
@@ -165,67 +158,36 @@ predict.TwinBKP <- function(
   Xnew_norm <- sweep(Xnew, 2, Xbounds[, 1], "-")
   Xnew_norm <- sweep(Xnew_norm, 2, Xbounds[, 2] - Xbounds[, 1], "/")
 
-  n_new <- nrow(Xnew_norm)  # 预测点数量
+  n_new <- nrow(Xnew_norm)
 
-  # ======================================================
-  # 第二步：l 和 v 参数检查
-  # ======================================================
 
   if (!is.numeric(l) || length(l) != 1 || l <= 0) stop("'l' must be a positive integer.")
   l <- as.integer(l)
-  l_eff <- min(l, n)  # 不超过训练集大小
+  l_eff <- min(l, n)
 
   if (is.null(v)) v <- 2L * g  # 默认 v = 2g
   if (!is.numeric(v) || length(v) != 1 || v <= 0) stop("'v' must be a positive integer.")
   v <- as.integer(v)
 
-  # ======================================================
-  # 第三步：构建 kd-tree（用全训练集归一化坐标）
-  # ======================================================
-
-  if (!requireNamespace("FNN", quietly = TRUE)) {
-    stop("Package 'FNN' is required for kd-tree search. Install with install.packages('FNN').")
-  }
-
-  # 对所有预测点一次性做 kNN 查询，返回 n_new x l_eff 的索引矩阵
-  knn_result <- FNN::get.knnx(
-    data  = Xnorm,      # 训练集作为搜索库
-    query = Xnew_norm,  # 预测点作为查询
-    k     = l_eff,
-    algorithm = "kd_tree"
+  knn_result <- get_knnx_nanoflann_rcpp(
+    data = Xnorm,
+    query = Xnew_norm,
+    k = l_eff
   )
-  local_idx_mat  <- knn_result$nn.index   # (n_new x l_eff) 局部点索引
-  local_dist_mat <- knn_result$nn.dist    # (n_new x l_eff) 到各邻居的距离
+  local_idx_mat  <- knn_result$nn.index
+  local_dist_mat <- knn_result$nn.dist
 
-  # ======================================================
-  # 第四步：按公式(14)计算每个预测点的 Wendland 核超参数 theta_l
-  #
-  # 公式(14)：theta_l = min{ rho : X_n ⊆ ∪ B_rho(x_i), x_i ∈ X_g }
-  # 即：覆盖半径 = max_{x ∈ X_n} min_{x_i ∈ X_g} ||x - x_i||_2
-  # 这是一个与预测点无关的全局量，可以预计算一次
-  # ======================================================
-
-  # 计算覆盖半径：对全训练集中每个点，找它到全局点集的最近距离
-  knn_global <- FNN::get.knnx(
-    data  = Xnorm_global,  # 全局点作为搜索库
-    query = Xnorm,         # 全训练集作为查询
-    k     = 1L,
-    algorithm = "kd_tree"
+  knn_global <- get_knnx_nanoflann_rcpp(
+    data = Xnorm_global,
+    query = Xnorm,
+    k = 1L
   )
-  # theta_l = 覆盖半径 = 最大的"最近全局点距离"
   theta_l <- max(knn_global$nn.dist)
 
-  # q = floor(d/2) + 3（Wendland 核的阶数参数）
   q_wend <- floor(d / 2) + 3
 
-  # ======================================================
-  # 第五步：构建 Validation set（从非全局点中随机选 v 个）
-  # ======================================================
-
-  # 非全局点索引
   non_global_idx <- setdiff(seq_len(n), global_idx)
 
-  # 若非全局点数量不足，补充全局点
   v_eff <- min(v, length(non_global_idx))
   if (v_eff < v) {
     warning(sprintf(
@@ -234,17 +196,11 @@ predict.TwinBKP <- function(
     ))
   }
 
-  # 随机选取 v_eff 个 validation 点
   val_idx   <- sample(non_global_idx, size = v_eff, replace = FALSE)
   Xnorm_val <- Xnorm[val_idx, , drop = FALSE]
   y_val     <- y[val_idx, , drop = FALSE]
   m_val     <- m_train[val_idx, , drop = FALSE]
 
-  # ======================================================
-  # 第六步：预计算全局核矩阵（在 validation 点上，只需计算一次）
-  #
-  # K_g(val, global)：validation 点 × 全局点 的核矩阵
-  # ======================================================
 
   K_g_val <- kernel_matrix(
     X = Xnorm_val,
@@ -253,13 +209,6 @@ predict.TwinBKP <- function(
     isotropic = isotropic
   )
 
-  # ======================================================
-  # 第七步：对每个预测点，优化混合比例 lambda
-  # ======================================================
-
-  # Wendland 核函数（紧支撑，保证局部核和全局核可识别）
-  # L(xa, xb) = (q * r/theta + 1) * max(0, 1 - r/theta)^q
-  # 其中 r = ||xa - xb||_2，q = floor(d/2) + 3
   .wendland_kernel <- function(X1, X2, theta) {
     n1 <- nrow(X1); n2 <- nrow(X2)
     K  <- matrix(0, n1, n2)
@@ -271,10 +220,8 @@ predict.TwinBKP <- function(
     K
   }
 
-  # 混合核 loss（在 validation set 上评估）
-  # 混合核矩阵 = lambda * K_g + (1-lambda) * K_l
   .mixed_loss <- function(lambda, K_g, K_l, y_v, m_v, alpha0_v, beta0_v) {
-    lambda  <- pmin(pmax(lambda, 0), 1)  # 限制在 [0,1]
+    lambda  <- pmin(pmax(lambda, 0), 1)
     K_mix <- lambda * K_g_val + (1 - lambda) * K_l_val
 
     if (loss_type == "brier") {
@@ -286,48 +233,37 @@ predict.TwinBKP <- function(
     }
   }
 
-  # ======================================================
-  # 第八步：对每个预测点逐一预测
-  # ======================================================
-
-  # 预分配输出容器
   pred_mean     <- numeric(n_new)
   pred_var      <- numeric(n_new)
   pred_lower    <- numeric(n_new)
   pred_upper    <- numeric(n_new)
   pred_lambda   <- numeric(n_new)
-  pred_theta_l  <- rep(theta_l, n_new)  # theta_l 是全局量，对所有预测点相同
+  pred_theta_l  <- rep(theta_l, n_new)
   local_idx_out <- vector("list", n_new)
 
   for (i in seq_len(n_new)) {
 
-    # --- 8a. 提取第 i 个预测点的局部点 ---
-    loc_idx  <- local_idx_mat[i, ]           # 局部点在训练集中的行索引
+    loc_idx  <- local_idx_mat[i, ]
     Xnorm_loc <- Xnorm[loc_idx, , drop = FALSE]
     y_loc     <- y[loc_idx, , drop = FALSE]
     m_loc     <- m_train[loc_idx, , drop = FALSE]
     local_idx_out[[i]] <- loc_idx
 
-    # --- 8b. 在 validation 点上计算局部 Wendland 核矩阵 ---
     K_l_val <- .wendland_kernel(
       X1 = Xnorm_val,
       X2 = Xnorm_val,
       theta = theta_l
     )
 
-    # --- 8c. 计算 validation 点的先验参数 ---
-    # 这里先验基于 validation 点本身，使用 noninformative 先验简化
-    # （若需要 adaptive，可用全局 K 计算）
     prior_val <- get_prior(
       prior = prior, model = "BKP",
       r0 = r0, p0 = p0,
       y = y_val, m = m_val,
-      K = K_g_val  # 用全局核做先验（最稳）
+      K = K_g_val
     )
     alpha0_val <- prior_val$alpha0
     beta0_val  <- prior_val$beta0
 
-    # --- 8d. 优化 lambda（在 validation set 上） ---
     opt_lambda <- optimise(
       f        = .mixed_loss,
       interval = c(0, 1),
@@ -342,8 +278,6 @@ predict.TwinBKP <- function(
     lambda_i <- opt_lambda$minimum
     pred_lambda[i] <- lambda_i
 
-    # --- 8e. 用混合核对预测点做后验更新 ---
-    # 预测点到全局点的核向量（1 x g）
     K_g_star <- kernel_matrix(
       X        = matrix(Xnew_norm[i, ], nrow = 1),
       Xprime   = Xnorm_global,
@@ -352,14 +286,11 @@ predict.TwinBKP <- function(
       isotropic = isotropic
     )  # (1 x g)
 
-    # 预测点到局部点的 Wendland 核向量（1 x l）
     K_l_star <- .wendland_kernel(
       X1    = matrix(Xnew_norm[i, ], nrow = 1),
       X2    = Xnorm_loc,
       theta = theta_l
     )  # (1 x l)
-
-    # 全局点的先验参数
     prior_g <- get_prior(
       prior = prior, model = "BKP",
       r0 = r0, p0 = p0,
@@ -368,7 +299,6 @@ predict.TwinBKP <- function(
                         kernel = kernel, isotropic = isotropic)
     )
 
-    # 局部点的先验参数
     K_ll <- .wendland_kernel(Xnorm_loc, Xnorm_loc, theta_l)
     prior_l <- get_prior(
       prior = prior, model = "BKP",
@@ -377,7 +307,6 @@ predict.TwinBKP <- function(
       K = K_ll
     )
 
-    # 混合后验参数
     # alpha_n = alpha0 + lambda * K_g * y_g + (1-lambda) * K_l * y_l
     alpha_n_i <- lambda_i * (as.numeric(prior_g$alpha0) +
                                as.numeric(K_g_star %*% as.numeric(y_global))) +
@@ -389,7 +318,6 @@ predict.TwinBKP <- function(
       (1 - lambda_i) * (as.numeric(prior_l$beta0) +
                           as.numeric(K_l_star %*% as.numeric(m_loc - y_loc)))
 
-    # 后验均值和方差（Beta 分布）
     eps <- 1e-10
     ab_sum <- max(alpha_n_i + beta_n_i, eps)
 
@@ -397,32 +325,26 @@ predict.TwinBKP <- function(
     pred_mean[i] <- min(max(pred_mean[i], eps), 1 - eps)
     pred_var[i]  <- pred_mean[i] * (1 - pred_mean[i]) / (ab_sum + 1)
 
-    # 置信区间（Beta 分位数）
     pred_lower[i] <- suppressWarnings(qbeta((1 - CI_level) / 2, alpha_n_i, beta_n_i))
     pred_upper[i] <- suppressWarnings(qbeta((1 + CI_level) / 2, alpha_n_i, beta_n_i))
   }
 
-  # ======================================================
-  # 第九步：组装并返回结果
-  # ======================================================
-
   result <- list(
-    Xnew      = Xnew,           # 原始预测点坐标
-    Xnew_norm = Xnew_norm,      # 归一化预测点坐标
-    mean      = pred_mean,      # 后验均值
-    variance  = pred_var,       # 后验方差
-    lower     = pred_lower,     # 置信区间下界
-    upper     = pred_upper,     # 置信区间上界
-    lambda    = pred_lambda,    # 每个预测点的混合比例
-    theta_l   = pred_theta_l,   # 局部核超参数（覆盖半径）
-    theta_global = theta_global,# 全局核超参数
-    local_idx = local_idx_out,  # 每个预测点的局部邻居索引
+    Xnew      = Xnew,          
+    Xnew_norm = Xnew_norm,   
+    mean      = pred_mean,   
+    variance  = pred_var,    
+    lower     = pred_lower,  
+    upper     = pred_upper,  
+    lambda    = pred_lambda, 
+    theta_l   = pred_theta_l,
+    theta_global = theta_global,
+    local_idx = local_idx_out, 
     CI_level  = CI_level,
     l         = l_eff,
     v         = v_eff
   )
 
-  # 分类标签（仅 m=1 的情形）
   if (all(m_train == 1)) {
     result$class     <- ifelse(pred_mean > threshold, 1, 0)
     result$threshold <- threshold

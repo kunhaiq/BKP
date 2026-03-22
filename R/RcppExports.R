@@ -33,6 +33,10 @@ get_prior_dkp_adaptive_rcpp <- function(K, Y, r0) {
     .Call(`_BKP_get_prior_dkp_adaptive_rcpp`, K, Y, r0)
 }
 
+get_knnx_nanoflann_rcpp <- function(data, query, k) {
+    .Call(`_BKP_get_knnx_nanoflann_rcpp`, data, query, k)
+}
+
 kernel_matrix_rcpp <- function(X, Xprime = NULL, theta = as.numeric( c(0.1)), kernel = "gaussian", isotropic = TRUE) {
     .Call(`_BKP_kernel_matrix_rcpp`, X, Xprime, theta, kernel, isotropic)
 }

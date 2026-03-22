@@ -56,7 +56,6 @@ and return posterior mean/variance/confidence interval.
 }
 }
 \examples{
-if (requireNamespace("FNN", quietly = TRUE)) {
 
   # ============================================================== #
   # ======================= TwinBKP Examples ====================== #
@@ -119,7 +118,7 @@ if (requireNamespace("FNN", quietly = TRUE)) {
   x2 <- seq(Xbounds[2, 1], Xbounds[2, 2], length.out = 8)
   Xnew <- expand.grid(x1 = x1, x2 = x2)
   predict(model2, Xnew = Xnew, l = 12)
-}
+
 }
 \seealso{
 \code{\link{fit_TwinBKP}}
