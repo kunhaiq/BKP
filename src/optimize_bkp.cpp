@@ -1,10 +1,11 @@
 #include <RcppArmadillo.h>
+#include <nloptrAPI.h>
 #include <limits>
 #include <cmath>
 #include <algorithm>
 #include <vector>
 
-// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(RcppArmadillo, nloptr)]]
 
 using namespace Rcpp;
 
@@ -24,10 +25,6 @@ double loss_fun_logloss_bkp_rcpp(
   const arma::mat& K, const arma::vec& y, const arma::vec& m,
   const arma::vec& alpha0, const arma::vec& beta0
 );
-
-static inline double clamp_double(const double x, const double lo, const double hi) {
-  return std::max(lo, std::min(hi, x));
-}
 
 static double eval_bkp_loss_from_gamma(
     const arma::vec& gamma,
@@ -94,10 +91,8 @@ static List generate_anisotropic_candidates(
     arma::mat lhs(n_lhs, p);
 
     for (int j = 0; j < p; ++j) {
-      // generate permutation of 0..n_lhs-1
       arma::uvec perm = arma::randperm(n_lhs);
       for (int i = 0; i < n_lhs; ++i) {
-        // stratified sample within each cell
         double u = (static_cast<double>(perm[i]) + R::runif(0.0, 1.0)) / static_cast<double>(n_lhs);
         lhs(i, j) = lower + u * (upper - lower);
       }
@@ -109,8 +104,35 @@ static List generate_anisotropic_candidates(
   return List::create(Named("cand") = cand);
 }
 
-// ---- L-BFGS-B forward declaration (must appear before use) ----
-static Rcpp::List lbfgsb_refine(
+// ---------- NLOPT objective ----------
+struct BKPOptData {
+  const arma::mat* Xnorm;
+  const arma::vec* y;
+  const arma::vec* m;
+  std::string prior;
+  double r0;
+  double p0;
+  std::string loss;
+  std::string kernel;
+  bool isotropic;
+};
+
+static double bkp_nlopt_obj(unsigned n, const double* x, double* grad, void* f_data) {
+  if (grad != nullptr) {
+    for (unsigned i = 0; i < n; ++i) grad[i] = 0.0; // SBPLX does not use gradient
+  }
+
+  BKPOptData* d = reinterpret_cast<BKPOptData*>(f_data);
+  arma::vec gamma(n);
+  for (unsigned i = 0; i < n; ++i) gamma[i] = x[i];
+
+  return eval_bkp_loss_from_gamma(
+    gamma, *(d->Xnorm), *(d->y), *(d->m),
+    d->prior, d->r0, d->p0, d->loss, d->kernel, d->isotropic
+  );
+}
+
+static Rcpp::List nloptr_refine(
     arma::vec gamma_init,
     const arma::mat& Xnorm,
     const arma::vec& y,
@@ -123,8 +145,41 @@ static Rcpp::List lbfgsb_refine(
     const bool isotropic,
     const arma::vec& lower,
     const arma::vec& upper,
-    const int max_iter
-);
+    const int max_eval
+) {
+  for (arma::uword i = 0; i < gamma_init.n_elem; ++i) {
+    gamma_init[i] = std::max(lower[i], std::min(upper[i], gamma_init[i]));
+  }
+  std::vector<double> x(gamma_init.begin(), gamma_init.end());
+  std::vector<double> lb(lower.begin(), lower.end());
+  std::vector<double> ub(upper.begin(), upper.end());
+
+  BKPOptData data{&Xnorm, &y, &m, prior, r0, p0, loss, kernel, isotropic};
+
+  nlopt_opt opt = nlopt_create(NLOPT_LN_SBPLX, static_cast<unsigned>(x.size()));
+  nlopt_set_lower_bounds(opt, lb.data());
+  nlopt_set_upper_bounds(opt, ub.data());
+  nlopt_set_min_objective(opt, bkp_nlopt_obj, &data);
+  nlopt_set_maxeval(opt, max_eval);
+  nlopt_set_xtol_rel(opt, 1e-6);
+
+  double f_min = std::numeric_limits<double>::infinity();
+  nlopt_result rc = nlopt_optimize(opt, x.data(), &f_min);
+  nlopt_destroy(opt);
+
+  arma::vec g_opt(x.size());
+  for (std::size_t i = 0; i < x.size(); ++i) g_opt[i] = x[i];
+
+  if (!std::isfinite(f_min)) {
+    f_min = eval_bkp_loss_from_gamma(g_opt, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic);
+  }
+
+  return List::create(
+    Named("gamma") = g_opt,
+    Named("value") = f_min,
+    Named("status") = static_cast<int>(rc)
+  );
+}
 
 // [[Rcpp::export]]
 Rcpp::List optimize_bkp_theta_rcpp(
@@ -183,7 +238,7 @@ Rcpp::List optimize_bkp_theta_rcpp(
       lower[0] = grid[i_left];
       upper[0] = grid[i_right];
 
-      List ref = lbfgsb_refine(
+      List ref = nloptr_refine(
         g0, Xnorm, y, m, prior, r0, p0, loss, kernel, true,
         lower, upper, max_iter
       );
@@ -230,7 +285,7 @@ Rcpp::List optimize_bkp_theta_rcpp(
       const int idx = static_cast<int>(ord[k]);
       arma::vec g0 = cand.row(idx).t();
 
-      List ref = lbfgsb_refine(
+      List ref = nloptr_refine(
         g0, Xnorm, y, m, prior, r0, p0, loss, kernel, false,
         lower, upper, max_iter
       );
@@ -254,194 +309,5 @@ Rcpp::List optimize_bkp_theta_rcpp(
     Named("theta_opt") = theta_opt,
     Named("gamma_opt") = gamma_opt,
     Named("loss_min") = loss_min
-  );
-}
-
-// ---- L-BFGS-B helpers ----
-static inline arma::vec project_box(const arma::vec& x, const arma::vec& lower, const arma::vec& upper) {
-  arma::vec out = x;
-  for (arma::uword i = 0; i < out.n_elem; ++i) {
-    out[i] = clamp_double(out[i], lower[i], upper[i]);
-  }
-  return out;
-}
-
-static inline double projected_grad_inf_norm(
-    const arma::vec& x, const arma::vec& g,
-    const arma::vec& lower, const arma::vec& upper
-) {
-  double mx = 0.0;
-  for (arma::uword i = 0; i < x.n_elem; ++i) {
-    double pg = g[i];
-    const bool at_lower = (x[i] <= lower[i] + 1e-12);
-    const bool at_upper = (x[i] >= upper[i] - 1e-12);
-
-    // Feasible projected gradient for box constraints
-    if ((at_lower && g[i] > 0.0) || (at_upper && g[i] < 0.0)) {
-      pg = 0.0;
-    }
-    mx = std::max(mx, std::abs(pg));
-  }
-  return mx;
-}
-
-static arma::vec finite_diff_grad(
-    const arma::vec& x,
-    const arma::mat& Xnorm,
-    const arma::vec& y,
-    const arma::vec& m,
-    const std::string& prior,
-    const double r0,
-    const double p0,
-    const std::string& loss,
-    const std::string& kernel,
-    const bool isotropic,
-    const arma::vec& lower,
-    const arma::vec& upper
-) {
-  const arma::uword p = x.n_elem;
-  arma::vec g(p, arma::fill::zeros);
-
-  const double f0 = eval_bkp_loss_from_gamma(x, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic);
-
-  for (arma::uword j = 0; j < p; ++j) {
-    const double span = std::max(1e-8, upper[j] - lower[j]);
-    const double h = std::min(1e-3 * (1.0 + std::abs(x[j])), 0.25 * span);
-
-    arma::vec xp = x, xm = x;
-    xp[j] = clamp_double(x[j] + h, lower[j], upper[j]);
-    xm[j] = clamp_double(x[j] - h, lower[j], upper[j]);
-
-    if (xp[j] > x[j] && xm[j] < x[j]) {
-      const double fp = eval_bkp_loss_from_gamma(xp, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic);
-      const double fm = eval_bkp_loss_from_gamma(xm, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic);
-      g[j] = (fp - fm) / (xp[j] - xm[j]);
-    } else if (xp[j] > x[j]) {
-      const double fp = eval_bkp_loss_from_gamma(xp, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic);
-      g[j] = (fp - f0) / (xp[j] - x[j]);
-    } else if (xm[j] < x[j]) {
-      const double fm = eval_bkp_loss_from_gamma(xm, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic);
-      g[j] = (f0 - fm) / (x[j] - xm[j]);
-    } else {
-      g[j] = 0.0;
-    }
-  }
-  return g;
-}
-
-static Rcpp::List lbfgsb_refine(
-    arma::vec gamma_init,
-    const arma::mat& Xnorm,
-    const arma::vec& y,
-    const arma::vec& m,
-    const std::string& prior,
-    const double r0,
-    const double p0,
-    const std::string& loss,
-    const std::string& kernel,
-    const bool isotropic,
-    const arma::vec& lower,
-    const arma::vec& upper,
-    const int max_iter
-) {
-  arma::vec x = project_box(gamma_init, lower, upper);
-  double fx = eval_bkp_loss_from_gamma(x, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic);
-  arma::vec g = finite_diff_grad(x, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic, lower, upper);
-
-  const int m_hist = 7;
-  std::vector<arma::vec> s_hist, y_hist;
-  std::vector<double> rho_hist;
-  s_hist.reserve(m_hist);
-  y_hist.reserve(m_hist);
-  rho_hist.reserve(m_hist);
-
-  const double pg_tol = 1e-5;
-  const double c1 = 1e-4;
-
-  for (int it = 0; it < max_iter; ++it) {
-    if (projected_grad_inf_norm(x, g, lower, upper) < pg_tol) break;
-
-    // ---- two-loop recursion ----
-    arma::vec q = g;
-    const int k = static_cast<int>(s_hist.size());
-    std::vector<double> alpha(k, 0.0);
-
-    for (int i = k - 1; i >= 0; --i) {
-      alpha[i] = rho_hist[i] * arma::dot(s_hist[i], q);
-      q -= alpha[i] * y_hist[i];
-    }
-
-    arma::vec r = q;
-    if (k > 0) {
-      const arma::vec& sk = s_hist.back();
-      const arma::vec& yk = y_hist.back();
-      const double yy = arma::dot(yk, yk);
-      const double sy = arma::dot(sk, yk);
-      const double H0 = (yy > 0.0) ? (sy / yy) : 1.0;
-      r *= H0;
-    }
-
-    for (int i = 0; i < k; ++i) {
-      const double beta = rho_hist[i] * arma::dot(y_hist[i], r);
-      r += s_hist[i] * (alpha[i] - beta);
-    }
-
-    arma::vec pdir = -r;
-    if (arma::dot(pdir, g) >= 0.0) pdir = -g; // fallback to steepest descent
-
-    // ---- Armijo backtracking with projection ----
-    double step = 1.0;
-    arma::vec x_new = x;
-    double f_new = fx;
-    bool accepted = false;
-
-    const double gd = arma::dot(g, pdir);
-
-    for (int ls = 0; ls < 25; ++ls) {
-      arma::vec trial = project_box(x + step * pdir, lower, upper);
-
-      if (arma::norm(trial - x, "inf") < 1e-12) {
-        step *= 0.5;
-        continue;
-      }
-
-      const double f_trial = eval_bkp_loss_from_gamma(trial, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic);
-      if (std::isfinite(f_trial) && (f_trial <= fx + c1 * step * gd)) {
-        x_new = trial;
-        f_new = f_trial;
-        accepted = true;
-        break;
-      }
-      step *= 0.5;
-    }
-
-    if (!accepted) break;
-
-    arma::vec g_new = finite_diff_grad(x_new, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic, lower, upper);
-
-    arma::vec s = x_new - x;
-    arma::vec yk = g_new - g;
-    const double ys = arma::dot(yk, s);
-
-    if (ys > 1e-10) {
-      const double rho = 1.0 / ys;
-      if (static_cast<int>(s_hist.size()) == m_hist) {
-        s_hist.erase(s_hist.begin());
-        y_hist.erase(y_hist.begin());
-        rho_hist.erase(rho_hist.begin());
-      }
-      s_hist.push_back(s);
-      y_hist.push_back(yk);
-      rho_hist.push_back(rho);
-    }
-
-    x = x_new;
-    fx = f_new;
-    g = g_new;
-  }
-
-  return List::create(
-    Named("gamma") = x,
-    Named("value") = fx
   );
 }
