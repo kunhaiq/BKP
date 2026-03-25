@@ -199,6 +199,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// optimize_bkp_theta_rcpp
+Rcpp::List optimize_bkp_theta_rcpp(const arma::mat& Xnorm, const arma::vec& y, const arma::vec& m, const std::string& prior, const double r0, const double p0, const std::string& loss, const std::string& kernel, const bool isotropic, const int n_grid, const int n_starts, const int max_iter, const double g_lower, const double g_upper);
+RcppExport SEXP _BKP_optimize_bkp_theta_rcpp(SEXP XnormSEXP, SEXP ySEXP, SEXP mSEXP, SEXP priorSEXP, SEXP r0SEXP, SEXP p0SEXP, SEXP lossSEXP, SEXP kernelSEXP, SEXP isotropicSEXP, SEXP n_gridSEXP, SEXP n_startsSEXP, SEXP max_iterSEXP, SEXP g_lowerSEXP, SEXP g_upperSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type Xnorm(XnormSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type m(mSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type prior(priorSEXP);
+    Rcpp::traits::input_parameter< const double >::type r0(r0SEXP);
+    Rcpp::traits::input_parameter< const double >::type p0(p0SEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type loss(lossSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type kernel(kernelSEXP);
+    Rcpp::traits::input_parameter< const bool >::type isotropic(isotropicSEXP);
+    Rcpp::traits::input_parameter< const int >::type n_grid(n_gridSEXP);
+    Rcpp::traits::input_parameter< const int >::type n_starts(n_startsSEXP);
+    Rcpp::traits::input_parameter< const int >::type max_iter(max_iterSEXP);
+    Rcpp::traits::input_parameter< const double >::type g_lower(g_lowerSEXP);
+    Rcpp::traits::input_parameter< const double >::type g_upper(g_upperSEXP);
+    rcpp_result_gen = Rcpp::wrap(optimize_bkp_theta_rcpp(Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic, n_grid, n_starts, max_iter, g_lower, g_upper));
+    return rcpp_result_gen;
+END_RCPP
+}
 // predict_bkp_rcpp
 List predict_bkp_rcpp(const arma::mat& K, const arma::vec& alpha0, const arma::vec& beta0, const arma::vec& y, const arma::vec& m);
 RcppExport SEXP _BKP_predict_bkp_rcpp(SEXP KSEXP, SEXP alpha0SEXP, SEXP beta0SEXP, SEXP ySEXP, SEXP mSEXP) {
@@ -258,6 +282,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BKP_loss_fun_logloss_bkp_rcpp", (DL_FUNC) &_BKP_loss_fun_logloss_bkp_rcpp, 5},
     {"_BKP_loss_fun_brier_dkp_rcpp", (DL_FUNC) &_BKP_loss_fun_brier_dkp_rcpp, 3},
     {"_BKP_loss_fun_logloss_dkp_rcpp", (DL_FUNC) &_BKP_loss_fun_logloss_dkp_rcpp, 3},
+    {"_BKP_optimize_bkp_theta_rcpp", (DL_FUNC) &_BKP_optimize_bkp_theta_rcpp, 14},
     {"_BKP_predict_bkp_rcpp", (DL_FUNC) &_BKP_predict_bkp_rcpp, 5},
     {"_BKP_predict_dkp_rcpp", (DL_FUNC) &_BKP_predict_dkp_rcpp, 3},
     {"_BKP_get_twin_indices_rcpp", (DL_FUNC) &_BKP_get_twin_indices_rcpp, 5},

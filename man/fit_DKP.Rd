@@ -46,8 +46,8 @@ Must have length equal to the number of categories \eqn{q}.}
 \item{loss}{Loss function for kernel hyperparameter tuning: \code{"brier"}
 (default) or \code{"log_loss"}.}
 
-\item{n_multi_start}{Number of random initializations for multi-start
-optimization. Default is \eqn{10 \times d}.}
+\item{n_multi_start}{Number of local-refinement starts selected from coarse
+candidates. Default is \code{1}. Coarse candidate count is \eqn{10 \times d}.}
 
 \item{theta}{Optional. A positive scalar or numeric vector of length \code{d}
 specifying kernel lengthscale parameters directly. If \code{NULL}

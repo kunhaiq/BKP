@@ -26,8 +26,8 @@
 #'   (default), \code{"matern52"}, or \code{"matern32"}.
 #' @param loss Loss function for kernel hyperparameter tuning: \code{"brier"}
 #'   (default) or \code{"log_loss"}.
-#' @param n_multi_start Number of random initializations for multi-start
-#'   optimization. Default is \eqn{10 \times d}.
+#' @param n_multi_start Number of local-refinement starts selected from coarse
+#' candidates. Default is \code{1}. Coarse candidate count is \eqn{10 \times d}.
 #' @param theta Optional. A positive scalar or numeric vector of length \code{d}
 #'   specifying kernel lengthscale parameters directly. If \code{NULL}
 #'   (default), lengthscales are optimized using multi-start L-BFGS-B to
@@ -43,8 +43,7 @@
 #'   \item{\code{kernel}}{Kernel function used, as a string.}
 #'   \item{\code{isotropic}}{Logical flag indicating whether a shared lengthscale (\code{TRUE}) or per-dimension lengthscales (\code{FALSE}) was used.}
 #'   \item{\code{loss}}{Loss function used for hyperparameter tuning.}
-#'   \item{\code{loss_min}}{Minimum loss achieved during optimization, or
-#'     \code{NA} if \code{theta} was user-specified.}
+#'   \item{\code{loss_min}}{Loss value at the selected/provided kernel parameters.}
 #'   \item{\code{X}}{Original input matrix (\eqn{n \times d}).}
 #'   \item{\code{Xnorm}}{Normalized input matrix scaled to \eqn{[0,1]^d}.}
 #'   \item{\code{Xbounds}}{Normalization bounds for each input dimension (\eqn{d \times 2}).}
@@ -234,40 +233,49 @@ fit_BKP <- function(
   Xnorm <- sweep(Xnorm, 2, Xbounds[,2] - Xbounds[,1], "/")
 
   if (is.null(theta)) {
-    # ---- Determine initial search space for log10(theta) ----
-    # We work in log10(theta) space for numerical stability
     n_theta <- if (isotropic) 1 else d
-    gamma_bounds <- matrix(c((log10(d) - log10(500))/2,   # lower bound
-                             (log10(d) + 2)/2),           # upper bound
-                           ncol = 2, nrow = n_theta, byrow = TRUE)
-    if (is.null(n_multi_start)) n_multi_start <- 10 * n_theta
-    init_gamma <- lhs(n_multi_start, gamma_bounds)
 
-    # ---- Run multi-start L-BFGS-B optimization to find best kernel parameters ----
-    opt_res <- multistart(
-      parmat = init_gamma,
-      fn     = loss_fun,
-      method = "L-BFGS-B",
-      lower  = rep(-3, n_theta), # relaxed lower bound
-      upper  = rep(3, n_theta),  # relaxed upper bound
-      prior = prior, r0 = r0, p0 = p0,
-      Xnorm = Xnorm, y = y, m=m,
-      model = "BKP", loss = loss, kernel = kernel, isotropic = isotropic,
-      control= list(trace=0))
+    # Set the coarse search candidate count to 10 * d
+    n_grid_cpp <- as.integer(max(10L, 10L * d))
 
-    # ---- Extract optimal kernel parameters and loss ----
-    # opt_res <- opt_res[opt_res$convergence == 0, , drop=FALSE]
-    best_index <- which.min(opt_res$value)
-    gamma_opt  <- as.numeric(opt_res[best_index, 1:n_theta])
-    theta_opt  <- 10^gamma_opt
-    loss_min   <- opt_res$value[best_index]
-  }else{
-    # ---- Use user-provided theta ----
+    n_starts_cpp <- if (is.null(n_multi_start)) {
+      1L
+    } else {
+      as.integer(max(1L, n_multi_start))
+    }
+
+    max_iter_cpp <- 100L
+    g_lower <- (log10(d) - log10(500)) / 2
+    g_upper <- (log10(d) + 2) / 2
+
+    opt_cpp <- optimize_bkp_theta_rcpp(
+      Xnorm = Xnorm,
+      y = as.numeric(y),
+      m = as.numeric(m),
+      prior = prior,
+      r0 = r0,
+      p0 = p0,
+      loss = loss,
+      kernel = kernel,
+      isotropic = isotropic,
+      n_grid = n_grid_cpp,
+      n_starts = n_starts_cpp,
+      max_iter = max_iter_cpp,
+      g_lower = g_lower,
+      g_upper = g_upper
+    )
+
+    gamma_opt <- as.numeric(opt_cpp$gamma_opt)
+    theta_opt <- as.numeric(opt_cpp$theta_opt)
+    loss_min <- as.numeric(opt_cpp$loss_min)
+  } else {
     theta_opt <- theta
-    loss_min <- loss_fun(gamma = log10(theta_opt), Xnorm = Xnorm, y = y, m=m,
-                         prior = prior, r0 = r0, p0 = p0,
-                         model = "BKP", loss = loss, kernel = kernel,
-                         isotropic = isotropic)
+    loss_min <- loss_fun(
+      gamma = log10(theta_opt), Xnorm = Xnorm, y = y, m = m,
+      prior = prior, r0 = r0, p0 = p0,
+      model = "BKP", loss = loss, kernel = kernel,
+      isotropic = isotropic
+    )
   }
 
   # ---- Compute kernel matrix at optimized hyperparameters ----

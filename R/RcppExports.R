@@ -57,6 +57,10 @@ loss_fun_logloss_dkp_rcpp <- function(K, Y, alpha0) {
     .Call(`_BKP_loss_fun_logloss_dkp_rcpp`, K, Y, alpha0)
 }
 
+optimize_bkp_theta_rcpp <- function(Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic, n_grid, n_starts, max_iter, g_lower, g_upper) {
+    .Call(`_BKP_optimize_bkp_theta_rcpp`, Xnorm, y, m, prior, r0, p0, loss, kernel, isotropic, n_grid, n_starts, max_iter, g_lower, g_upper)
+}
+
 predict_bkp_rcpp <- function(K, alpha0, beta0, y, m) {
     .Call(`_BKP_predict_bkp_rcpp`, K, alpha0, beta0, y, m)
 }
