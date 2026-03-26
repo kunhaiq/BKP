@@ -1,8 +1,5 @@
-#' @keywords internal
-#' @useDynLib BKP, .registration = TRUE
-#' @importFrom Rcpp evalCpp
 "_PACKAGE"
- 
+
 #' @name BKP-package
 #'
 #' @title Beta Kernel Process Modeling
@@ -76,6 +73,7 @@
 #' @importFrom ggplot2 labs scale_color_discrete guides scale_fill_brewer scale_shape_manual
 #' @importFrom lattice levelplot panel.contourplot panel.levelplot panel.points
 #' @importFrom optimx multistart
+#' @importFrom Rcpp evalCpp
 #' @importFrom rlang .data
 #' @importFrom stats as.formula median qbeta quantile rbeta rgamma sd simulate
 #' @importFrom tgp lhs
