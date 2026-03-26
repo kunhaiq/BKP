@@ -144,35 +144,38 @@ fit_TwinBKP <- function(
 
   if (is.null(theta)) {
     n_theta <- if (isotropic) 1L else d
-    gamma_bounds <- matrix(
-      c((log10(d) - log10(500)) / 2, (log10(d) + 2) / 2),
-      ncol = 2, nrow = n_theta, byrow = TRUE
-    )
 
-    if (is.null(n_multi_start)) n_multi_start <- 10L * n_theta
+    n_grid_cpp <- as.integer(max(10L, 10L * d))
 
-    init_gamma <- lhs(n_multi_start, gamma_bounds)
+    n_starts_cpp <- if (is.null(n_multi_start)) {
+      1L
+    } else {
+      as.integer(max(1L, n_multi_start))
+    }
 
-    opt_res <- multistart(
-      parmat = init_gamma,
-      fn     = loss_fun,
-      method = "L-BFGS-B",
-      lower  = rep(-3, n_theta),
-      upper  = rep(3, n_theta),
-      prior = prior, r0 = r0, p0 = p0,
+    max_iter_cpp <- 100L 
+    g_lower <- (log10(d) - log10(500)) / 2
+    g_upper <- (log10(d) + 2) / 2
+    opt_cpp <- optimize_bkp_theta_rcpp(
       Xnorm = Xnorm_global,
-      y = y_global,
-      m = m_global,
-      model = "BKP", loss = loss,
-      kernel = kernel, isotropic = isotropic,
-      control = list(trace = 0)
+      y = as.numeric(y_global),
+      m = as.numeric(m_global),
+      prior = prior,
+      r0 = r0,
+      p0 = p0,
+      loss = loss,
+      kernel = kernel,
+      isotropic = isotropic,
+      n_grid = n_grid_cpp,
+      n_starts = n_starts_cpp,
+      max_iter = max_iter_cpp,
+      g_lower = g_lower,
+      g_upper = g_upper
     )
 
-    best_index  <- which.min(opt_res$value)
-    gamma_opt   <- as.numeric(opt_res[best_index, 1:n_theta])
-    theta_global <- 10^gamma_opt
-    loss_global  <- opt_res$value[best_index]
-
+    gamma_opt    <- as.numeric(opt_cpp$gamma_opt)
+    theta_global <- as.numeric(opt_cpp$theta_opt)
+    loss_global  <- as.numeric(opt_cpp$loss_min)
   } else {
     theta_global <- theta
     loss_global  <- loss_fun(
@@ -210,7 +213,11 @@ fit_TwinBKP <- function(
     r0        = r0,
     p0        = p0,
     loss      = loss,
-    g         = g_eff
+    g         = g_eff,
+
+    theta_opt = theta_global,
+    loss_min = loss_global,
+    tune_idx = global_idx
   )
 
   class(TwinBKP_model) <- "TwinBKP"
