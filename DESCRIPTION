@@ -19,18 +19,7 @@ NeedsCompilation: yes
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Depends: R (>= 3.5.0)
-Imports: 
-    dirmult,
-    ggplot2,
-    gridExtra,
-    lattice,
-    optimx,
-    rlang,
-    tgp,
-    Rcpp
+Imports: dirmult, ggplot2, gridExtra, lattice, optimx, rlang, tgp, Rcpp
 Suggests: knitr, mlbench, testthat (>= 3.0.0)
 Config/testthat/edition: 3
-LinkingTo: 
-    Rcpp,
-    RcppArmadillo,
-    nloptr
+LinkingTo: Rcpp, RcppArmadillo, nloptr

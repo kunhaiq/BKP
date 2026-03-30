@@ -20,13 +20,9 @@ jobs:
       matrix:
         config:
           - {os: macos-latest,   r: 'release'}
-          - {os: macos-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: macos-latest,   r: 'oldrel-1'}
-          - {os: windows-latest,   r: 'release'}
-          - {os: windows-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: windows-latest,   r: 'oldrel-1'}
-          - {os: ubuntu-latest,   r: 'release'}
+          - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest,   r: 'release'}
           - {os: ubuntu-latest,   r: 'oldrel-1'}
 
     env:
@@ -44,35 +40,10 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      # Cache TinyTeX (to make subsequent builds faster)
-      - name: Cache TinyTeX
-        uses: actions/cache@v4
-        with:
-          path: ~/.TinyTeX
-          key: ${{ runner.os }}-tinytex
-          restore-keys: |
-            ${{ runner.os }}-tinytex
-
-      # Install TinyTeX (if it is not in the cache)
-      - name: Install TinyTeX (for LaTeX / pdflatex)
-        shell: Rscript {0}
-        run: |
-          options(repos = c(CRAN = "https://cloud.r-project.org"))
-          # If the tinytex package has not been installed yet, install it first
-          if (!requireNamespace("tinytex", quietly = TRUE)) {
-            install.packages("tinytex")
-          }
-          # Check again whether TinyTeX has already been installed
-          if (!tinytex::is_tinytex()) {
-            install.packages("tinytex")
-            tinytex::install_tinytex()
-          } else {
-            message("Using cached TinyTeX")
-          }
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
+          needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
