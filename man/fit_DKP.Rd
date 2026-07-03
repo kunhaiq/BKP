@@ -12,12 +12,12 @@ fit_DKP(
   r0 = 2,
   p0 = NULL,
   kernel = c("gaussian", "matern52", "matern32", "wendland"),
-  loss = c("brier", "log_loss"),
-  n_multi_start = NULL,
-  theta = NULL,
   isotropic = TRUE,
-  n_threads = 1,
-  ess = c("none", "shepard")
+  theta = NULL,
+  loss = c("brier", "log_loss"),
+  ess = c("none", "shepard"),
+  n_multi_start = NULL,
+  n_threads = 1
 )
 }
 \arguments{
@@ -51,13 +51,9 @@ one. If \code{NULL}, it is set to the empirical class-proportion vector
 \code{"gaussian"} (default), \code{"matern52"}, \code{"matern32"}, and
 \code{"wendland"}.}
 
-\item{loss}{Leave-one-out loss used for kernel hyperparameter tuning. Options
-are \code{"brier"} (default) and \code{"log_loss"}.}
-
-\item{n_multi_start}{Number of initial points used in multi-start
-derivative-free optimization of the kernel lengthscale parameters. If
-\code{NULL}, the default is \eqn{10p}, where \eqn{p = 1} for isotropic
-kernels and \eqn{p = d} for anisotropic kernels.}
+\item{isotropic}{Logical. If \code{TRUE} (default), use a single shared
+lengthscale across input dimensions. If \code{FALSE}, use separate
+per-dimension lengthscales.}
 
 \item{theta}{Optional positive kernel lengthscale parameter. When
 \code{isotropic = TRUE}, this must be a scalar. When
@@ -66,13 +62,8 @@ to all dimensions, or a numeric vector of length \code{d}. If \code{NULL},
 the lengthscale parameters are selected by minimizing the specified
 leave-one-out loss.}
 
-\item{isotropic}{Logical. If \code{TRUE} (default), use a single shared
-lengthscale across input dimensions. If \code{FALSE}, use separate
-per-dimension lengthscales.}
-
-\item{n_threads}{Number of OpenMP threads used for multi-start optimization.
-Default is \code{1}. This argument only affects fitting when
-\code{theta = NULL}.}
+\item{loss}{Leave-one-out loss used for kernel hyperparameter tuning. Options
+are \code{"brier"} (default) and \code{"log_loss"}.}
 
 \item{ess}{Effective-sample-size calibration for the kernel-weighted
 class-count contribution. Use \code{"none"} (default) for the standard DKP
@@ -84,6 +75,15 @@ normalized input scale and
 \eqn{\rho(\mathbf{x}) = \max_i k(\mathbf{x}, \mathbf{x}_i)}. This
 calibration preserves the kernel-weighted empirical class proportions and
 changes only the data precision, not the prior parameters.}
+
+\item{n_multi_start}{Number of initial points used in multi-start
+derivative-free optimization of the kernel lengthscale parameters. If
+\code{NULL}, the default is \eqn{10p}, where \eqn{p = 1} for isotropic
+kernels and \eqn{p = d} for anisotropic kernels.}
+
+\item{n_threads}{Number of OpenMP threads used for multi-start optimization.
+Default is \code{1}. This argument only affects fitting when
+\code{theta = NULL}.}
 }
 \value{
 A list of class \code{"DKP"} containing the fitted model, with the

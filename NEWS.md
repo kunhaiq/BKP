@@ -1,3 +1,7 @@
+# BKP 0.3.1 (2026-07-03)
+
+- Reordered optional arguments in `fit_BKP()` and `fit_DKP()` to group kernel specification, length-scale settings, loss/ESS options, and optimization controls more consistently. Named-argument usage is unaffected.
+
 # BKP 0.3.0 (2026-07-01)
 
 - Added `fit_TwinDKP()` and associated S3 methods for scalable global-local Dirichlet Kernel Process modeling.

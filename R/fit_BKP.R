@@ -27,24 +27,17 @@
 #' @param kernel Kernel function used for local weighting. Options are
 #'   \code{"gaussian"} (default), \code{"matern52"}, \code{"matern32"}, and
 #'   \code{"wendland"}.
-#' @param loss Leave-one-out loss used for kernel hyperparameter tuning. Options
-#'   are \code{"brier"} (default) and \code{"log_loss"}.
-#' @param n_multi_start Number of initial points used in multi-start
-#'   derivative-free optimization of the kernel lengthscale parameters. If
-#'   \code{NULL}, the default is \eqn{10p}, where \eqn{p = 1} for isotropic
-#'   kernels and \eqn{p = d} for anisotropic kernels.
+#' @param isotropic Logical. If \code{TRUE} (default), use a single shared
+#'   lengthscale across input dimensions. If \code{FALSE}, use separate
+#'   per-dimension lengthscales.
 #' @param theta Optional positive kernel lengthscale parameter. When
 #'   \code{isotropic = TRUE}, this must be a scalar. When
 #'   \code{isotropic = FALSE}, this can be either a scalar, which is broadcast
 #'   to all dimensions, or a numeric vector of length \code{d}. If \code{NULL},
 #'   the lengthscale parameters are selected by minimizing the specified
 #'   leave-one-out loss.
-#' @param isotropic Logical. If \code{TRUE} (default), use a single shared
-#'   lengthscale across input dimensions. If \code{FALSE}, use separate
-#'   per-dimension lengthscales.
-#' @param n_threads Number of OpenMP threads used for multi-start optimization.
-#'   Default is \code{1}. This argument only affects fitting when
-#'   \code{theta = NULL}.
+#' @param loss Leave-one-out loss used for kernel hyperparameter tuning. Options
+#'   are \code{"brier"} (default) and \code{"log_loss"}.
 #' @param ess Effective-sample-size calibration for the kernel-weighted data
 #'   contribution. Use \code{"none"} (default) for the standard BKP posterior
 #'   update. Use \code{"shepard"} to rescale the kernel-weighted data
@@ -54,6 +47,13 @@
 #'   scale and \eqn{\rho(\mathbf{x}) = \max_i k(\mathbf{x}, \mathbf{x}_i)}. This
 #'   calibration preserves the kernel-weighted empirical proportion and changes
 #'   only the data precision, not the prior parameters.
+#' @param n_multi_start Number of initial points used in multi-start
+#'   derivative-free optimization of the kernel lengthscale parameters. If
+#'   \code{NULL}, the default is \eqn{10p}, where \eqn{p = 1} for isotropic
+#'   kernels and \eqn{p = d} for anisotropic kernels.
+#' @param n_threads Number of OpenMP threads used for multi-start optimization.
+#'   Default is \code{1}. This argument only affects fitting when
+#'   \code{theta = NULL}.
 #'
 #' @details Inputs are normalized to \eqn{[0,1]^d} using \code{Xbounds}. For a
 #'   location \eqn{\mathbf{x}}, BKP computes kernel weights
@@ -189,13 +189,12 @@
 
 fit_BKP <- function(
     X, y, m, Xbounds = NULL,
-    prior = c("noninformative", "fixed", "adaptive"), r0 = 2, p0 = mean(y/m),
+    prior = c("noninformative", "fixed", "adaptive"), r0 = 2, p0 = mean(y / m),
     kernel = c("gaussian", "matern52", "matern32", "wendland"),
-    loss = c("brier", "log_loss"),
-    n_multi_start = NULL, theta = NULL,
-    isotropic = TRUE, n_threads = 1,
-    ess = c("none", "shepard")
-){
+    isotropic = TRUE, theta = NULL,
+    loss = c("brier", "log_loss"), ess = c("none", "shepard"),
+    n_multi_start = NULL, n_threads = 1
+) {
   # ---- Argument checking ----
   if (missing(X) || missing(y) || missing(m)) {
     stop("Arguments 'X', 'y', and 'm' must be provided.")

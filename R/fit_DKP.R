@@ -170,11 +170,10 @@ fit_DKP <- function(
     X, Y, Xbounds = NULL,
     prior = c("noninformative", "fixed", "adaptive"), r0 = 2, p0 = NULL,
     kernel = c("gaussian", "matern52", "matern32", "wendland"),
-    loss = c("brier", "log_loss"),
-    n_multi_start = NULL, theta = NULL,
-    isotropic = TRUE, n_threads = 1,
-    ess = c("none", "shepard")
-){
+    isotropic = TRUE, theta = NULL,
+    loss = c("brier", "log_loss"), ess = c("none", "shepard"),
+    n_multi_start = NULL, n_threads = 1
+) {
   # ---- Argument checking ----
   if (missing(X) || missing(Y)) {
     stop("Arguments 'X' and 'Y' must be provided.")
