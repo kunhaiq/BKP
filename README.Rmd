@@ -1,5 +1,7 @@
 ---
-output: github_document
+output:
+  github_document:
+    html_preview: false
 ---
 
 ```{r, include = FALSE}
@@ -7,7 +9,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "100%"
+  out.width = "100%",
+  dpi = 160
 )
 ```
 
@@ -21,9 +24,9 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/Jiangyan-Zhao/BKP/graph/badge.svg)](https://app.codecov.io/gh/Jiangyan-Zhao/BKP)
 <!-- badges: end -->
 
-**Model covariate-dependent binomial and multinomial probabilities directly—using flexible kernels and closed-form Beta or Dirichlet updates, without latent Gaussian variables or MCMC.**
+**Model covariate-dependent binomial and multinomial probabilities directly using flexible kernels and closed-form Beta or Dirichlet updates—without introducing latent Gaussian variables or relying on MCMC.**
 
-**BKP** provides probability-scale kernel models for binary and aggregated binomial responses. Kernel-weighted conjugate updating produces closed-form, pointwise Beta posterior summaries, including posterior means, variances, credible intervals, quantiles, and simulations.
+**BKP** provides probability-scale kernel models for binary and aggregated binomial responses. Kernel-weighted conjugate updating yields closed-form, pointwise Beta posterior summaries, including posterior means, variances, credible intervals, quantiles, and simulations.
 
 The package also implements the **Dirichlet Kernel Process (DKP)** for categorical and multinomial responses. For larger datasets, **TwinBKP** and **TwinDKP** combine twinning-selected global subsets with location-specific nearest-neighbour updates.
 
@@ -36,7 +39,6 @@ The package also implements the **Dirichlet Kernel Process (DKP)** for categoric
   ·
   <a href="https://github.com/Jiangyan-Zhao/BKP/issues"><strong>Issue tracker</strong></a>
 </p>
-
 
 ```{r demo-setup, include = FALSE}
 library(BKP)
@@ -70,11 +72,7 @@ true_pi_fun <- function(X) {
 }
 
 n_demo <- 100
-
-Xbounds_demo <- matrix(
-  c(0, 0, 1, 1),
-  nrow = 2
-)
+Xbounds_demo <- matrix(c(0, 0, 1, 1), nrow = 2)
 
 X_demo <- tgp::lhs(
   n = n_demo,
@@ -82,12 +80,7 @@ X_demo <- tgp::lhs(
 )
 
 true_pi_demo <- true_pi_fun(X_demo)
-
-m_demo <- sample(
-  100,
-  n_demo,
-  replace = TRUE
-)
+m_demo <- sample(100, n_demo, replace = TRUE)
 
 y_demo <- rbinom(
   n = n_demo,
@@ -95,50 +88,43 @@ y_demo <- rbinom(
   prob = true_pi_demo
 )
 
-# A fixed length scale keeps README rendering fast and reproducible.
-# Omit theta in regular analyses to select it by LOOCV.
 fit_demo <- fit_BKP(
   X = X_demo,
   y = y_demo,
   m = m_demo,
-  Xbounds = Xbounds_demo,
-  theta = 0.08
+  Xbounds = Xbounds_demo
 )
 ```
 
-```{r bkp-demonstration, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 8, fig.height = 6, fig.cap = "BKP posterior mean for a two-dimensional binomial probability surface."}
+```{r bkp-demonstration, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 9, fig.height = 8, fig.cap = "BKP posterior summaries for a two-dimensional binomial probability surface."}
 plot(
   fit_demo,
-  # only_mean = TRUE,
   engine = "ggplot",
   n_grid = 100
 )
 ```
 
-
 ## Why BKP?
 
-- **Closed-form posterior summaries:** obtain pointwise Beta or Dirichlet posterior quantities without MCMC or numerical posterior approximation.
-- **Direct probability modeling:** model covariate-dependent probabilities without introducing a latent Gaussian process and link function.
-- **Multiple response types:** support binary, binomial, categorical, and multinomial observations.
+- **Closed-form inference:** obtain pointwise Beta or Dirichlet posterior summaries without MCMC or numerical posterior approximation.
+- **Direct probability-scale modeling:** model covariate-dependent probabilities without introducing latent Gaussian variables or a link function.
+- **Multiple response types:** handle binary, binomial, categorical, and multinomial observations within a common framework.
 - **Flexible kernels:** choose Gaussian, Matérn 5/2, Matérn 3/2, or compactly supported Wendland kernels with isotropic or anisotropic length scales.
-- **Automatic tuning:** select kernel length scales by leave-one-out cross-validation using the Brier score or log-loss.
+- **Automatic hyperparameter tuning:** select kernel length scales by leave-one-out cross-validation using the Brier score or log-loss.
 - **Scalable approximations:** use TwinBKP or TwinDKP for twinning-based global-local modeling of larger datasets.
 
-Optional Shepard effective-sample-size calibration is available for BKP and DKP. Standard S3 interfaces are provided for prediction, simulation, plotting, summaries, fitted values, quantiles, and parameter extraction.
+Standard S3 interfaces are provided for prediction, simulation, visualization, model summaries, fitted values, posterior quantiles, and parameter extraction.
 
 ## Which model should I use?
 
 | Response type | Full model | Scalable approximation | Shepard ESS calibration |
 |:--|:--|:--|:--|
-| Binary or binomial | `fit_BKP()` | `fit_TwinBKP()` | Available for BKP |
-| Categorical or multinomial | `fit_DKP()` | `fit_TwinDKP()` | Available for DKP |
-
-TwinBKP and TwinDKP do not apply Shepard ESS calibration.
+| Binary or binomial | `fit_BKP()` | `fit_TwinBKP()` | `fit_BKP()` only |
+| Categorical or multinomial | `fit_DKP()` | `fit_TwinDKP()` | `fit_DKP()` only |
 
 ## Installation
 
-Install the stable release, currently **BKP 0.3.0**, from [CRAN](https://cran.r-project.org/package=BKP):
+Install the stable release from [CRAN](https://cran.r-project.org/package=BKP):
 
 ```{r install-cran, eval = FALSE}
 install.packages("BKP")
@@ -175,11 +161,7 @@ fit <- fit_BKP(
 summary(fit)
 plot(fit, engine = "ggplot")
 
-Xnew <- matrix(
-  seq(Xbounds[1, 1], Xbounds[1, 2], length.out = 100),
-  ncol = 1
-)
-
+# Xnew must have the same number of columns as X.
 pred <- predict(
   fit,
   Xnew = Xnew
@@ -191,7 +173,7 @@ pred
 When `theta` is omitted, `fit_BKP()` selects the kernel length scale by LOOCV. Supply a positive `theta` to skip optimization and fit the model using a fixed length scale.
 
 <details>
-<summary><strong>Complete reproducible example</strong></summary>
+<summary><strong>Complete reproducible one-dimensional example</strong></summary>
 
 ```{r complete-example, eval = FALSE}
 library(BKP)
@@ -208,20 +190,18 @@ X <- matrix(sort(runif(n, -2, 2)), ncol = 1)
 
 true_pi <- true_pi_fun(X)
 m <- sample(80:120, n, replace = TRUE)
+
 y <- rbinom(
   n = n,
   size = m,
   prob = true_pi
 )
 
-# A fixed theta is used only to keep this example fast and reproducible.
-# Omit theta to select it by leave-one-out cross-validation.
 fit <- fit_BKP(
   X = X,
   y = y,
   m = m,
-  Xbounds = Xbounds,
-  theta = 0.04
+  Xbounds = Xbounds
 )
 
 summary(fit)
@@ -244,7 +224,7 @@ head(pred)
 
 ## Categorical and multinomial responses
 
-Use `fit_DKP()` when each observation contains categorical or multinomial counts:
+Use `fit_DKP()` when the response is stored as an \(n \times q\) matrix `Y` of nonnegative class counts or frequencies:
 
 ```{r dkp-example, eval = FALSE}
 dkp_fit <- fit_DKP(
@@ -312,13 +292,13 @@ The reproducibility repository contains the manuscript source files, analysis sc
 
 ## Citing BKP
 
-If you use **BKP** in your work, please cite the software paper:
+If you use **BKP** in your work, please cite both the software paper and the version of the R package used in your analysis.
 
 > Zhao, J., Qing, K., and Xu, J. (2025).  
 > *BKP: An R Package for Beta Kernel Process Modeling.*  
 > arXiv:2508.10447.
 
-For the version-specific R package citation, run:
+For the version-specific package citation, run:
 
 ```{r citation, eval = FALSE}
 citation("BKP")
