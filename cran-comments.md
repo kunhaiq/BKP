@@ -1,20 +1,42 @@
-## Resubmission
+## Release summary
 
-This is a resubmission. I addressed the CRAN comments about examples/tests
-using more than two cores by default.
+This is an update to BKP 0.3.0, which is currently available on CRAN.
 
-Changes made:
+BKP 0.3.1 contains the following user-facing changes:
 
-* All package-controlled OpenMP loops are explicitly controlled by the
-  existing `n_threads` argument, whose default is `1`.
-* Examples and tests were revised to avoid unnecessary hyperparameter
-  optimization where fixed kernel lengthscales are sufficient to demonstrate
-  the user interface.
-* Large kernel matrices are evaluated using the package's serial C++ loop
-  engine to limit peak memory, while moderate-size kernel matrices retain the
-  GEMM path for computational efficiency.
-* Tests involving kernel matrix construction were reduced in size to avoid
-  unnecessary CPU usage during CRAN checks.
-* Users can still choose the number of package-controlled OpenMP threads
-  through the `n_threads` argument.
-* Added `inst/WORDLIST` for package-specific terms flagged by spell checking.
+* Reordered the optional arguments of `fit_BKP()` and `fit_DKP()` so that
+  kernel specification, length-scale settings, loss and effective-sample-size
+  options, and optimization controls are grouped more consistently. The
+  required arguments, argument names, default values, and named-argument usage
+  are unchanged. Calls that pass optional arguments positionally should be
+  updated to use named arguments.
+* Corrected probability-scale plot labels in the BKP, DKP, TwinBKP, and
+  TwinDKP plotting methods. The labels now use "Posterior Mean", "Posterior
+  Variance", and "95% Credible Interval" rather than predictive terminology,
+  because these panels summarize posterior uncertainty in the underlying
+  probability surface.
+* Added links to the companion BKP-paper reproducibility repository and
+  expanded the README with a model-selection guide, worked examples, and a
+  two-dimensional posterior-summary illustration.
+* Updated the package citation to version 0.3.1.
+
+No changes were made to the statistical calculations, compiled code, model
+defaults, or numerical optimization procedures.
+
+## Test environments
+
+The GitHub Actions workflow is configured to check the package on:
+
+* macOS, R release
+* Windows, R release
+* Ubuntu, R devel
+* Ubuntu, R release
+* Ubuntu, R oldrel-1
+
+The workflow uses `R CMD check --as-cran`. OpenMP and common BLAS thread counts
+are restricted to respect CRAN's parallel-use policies.
+
+## R CMD check results
+
+0 errors | 0 warnings | 0 notes
+
