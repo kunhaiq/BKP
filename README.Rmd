@@ -306,8 +306,4 @@ citation("BKP")
 
 ## Development
 
-The BKP package is under active development. Bug reports, feature requests, and contributions are welcome:
-
-- [Report an issue](https://github.com/Jiangyan-Zhao/BKP/issues)
-- [Open a pull request](https://github.com/Jiangyan-Zhao/BKP/pulls)
-- [View the source code](https://github.com/Jiangyan-Zhao/BKP)
+The BKP package is under active development. Bug reports, feature requests, and contributions are welcome.
