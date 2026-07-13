@@ -379,22 +379,22 @@ plot.DKP <- function(x, only_mean = FALSE, n_grid = 80, dims = NULL,
         if (only_mean) {
           # Only plot the predicted mean graphs
           p1 <- if (engine == "ggplot") {
-            my_2D_plot_fun_ggplot("Mean", "Predictive Mean", df, dims = dims)
+            my_2D_plot_fun_ggplot("Mean", "Posterior Mean", df, dims = dims)
           } else {
-            my_2D_plot_fun("Mean", "Predictive Mean", df, dims= dims)
+            my_2D_plot_fun("Mean", "Posterior Mean", df, dims= dims)
           }
           print(p1)
         } else {
           # Create 4 plots
           if (engine == "ggplot") {
-            p1 <- my_2D_plot_fun_ggplot("Mean", "Predictive Mean", df, dims = dims)
+            p1 <- my_2D_plot_fun_ggplot("Mean", "Posterior Mean", df, dims = dims)
             p2 <- my_2D_plot_fun_ggplot("Upper", paste0(prediction$CI_level * 100, "% CI Upper"), df, dims = dims)
-            p3 <- my_2D_plot_fun_ggplot("Variance", "Predictive Variance", df, dims = dims)
+            p3 <- my_2D_plot_fun_ggplot("Variance", "Posterior Variance", df, dims = dims)
             p4 <- my_2D_plot_fun_ggplot("Lower", paste0(prediction$CI_level * 100, "% CI Lower"), df, dims = dims)
           } else {
-            p1 <- my_2D_plot_fun("Mean", "Predictive Mean", df, dims= dims)
+            p1 <- my_2D_plot_fun("Mean", "Posterior Mean", df, dims= dims)
             p2 <- my_2D_plot_fun("Upper", paste0(prediction$CI_level * 100, "% CI Upper"), df, dims= dims)
-            p3 <- my_2D_plot_fun("Variance", "Predictive Variance", df, dims= dims)
+            p3 <- my_2D_plot_fun("Variance", "Posterior Variance", df, dims= dims)
             p4 <- my_2D_plot_fun("Lower", paste0(prediction$CI_level * 100, "% CI Lower"), df, dims= dims)
           }
           # Arrange into 2×2 layout

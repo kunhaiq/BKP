@@ -52,11 +52,11 @@
 #'   \item \strong{2D inputs:}
 #'     \itemize{
 #'       \item For BKP, DKP, TwinBKP, and TwinDKP models, the function generates contour plots over a 2D prediction grid.
-#'       \item Users can choose to plot only the predictive mean surface (\code{only_mean = TRUE}) or a set of four summary plots (\code{only_mean = FALSE}):
+#'       \item Users can choose to plot only the Posterior Mean surface (\code{only_mean = TRUE}) or a set of four summary plots (\code{only_mean = FALSE}):
 #'         \enumerate{
-#'           \item Predictive mean
+#'           \item Posterior Mean
 #'           \item 97.5th percentile (upper bound of 95% credible interval)
-#'           \item Predictive variance
+#'           \item Posterior Variance
 #'           \item 2.5th percentile (lower bound of 95% credible interval)
 #'         }
 #'       \item For DKP, these surfaces are generated separately for each class.
@@ -378,15 +378,15 @@ plot.BKP <- function(x, only_mean = FALSE, n_grid = 80, dims = NULL,
       # Only plot the predicted mean graphs
       if(is_classification){
         p1 <- if (engine == "ggplot") {
-          my_2D_plot_fun_ggplot("Mean", "Predicted Class Probability (Predictive Mean)", df, X = X_sub, y = y, dims = dims)
+          my_2D_plot_fun_ggplot("Mean", "Predicted Class Probability (Posterior Mean)", df, X = X_sub, y = y, dims = dims)
         } else {
-          my_2D_plot_fun("Mean", "Predicted Class Probability (Predictive Mean)", df, X = X_sub, y = y, dims = dims)
+          my_2D_plot_fun("Mean", "Predicted Class Probability (Posterior Mean)", df, X = X_sub, y = y, dims = dims)
         }
       }else{
         p1 <- if (engine == "ggplot") {
-          my_2D_plot_fun_ggplot("Mean", "Predictive Mean", df, dims = dims)
+          my_2D_plot_fun_ggplot("Mean", "Posterior Mean", df, dims = dims)
         } else {
-          my_2D_plot_fun("Mean", "Predictive Mean", df, dims = dims)
+          my_2D_plot_fun("Mean", "Posterior Mean", df, dims = dims)
         }
       }
       print(p1)
@@ -394,19 +394,19 @@ plot.BKP <- function(x, only_mean = FALSE, n_grid = 80, dims = NULL,
       # Create 2 or 4 plots
       if(is_classification){
         if (engine == "ggplot") {
-          p1 <- my_2D_plot_fun_ggplot("Mean", "Predictive Mean", df, X = X_sub, y = y, dims = dims)
-          p3 <- my_2D_plot_fun_ggplot("Variance", "Predictive Variance", df, X = X_sub, y = y, dims = dims)
+          p1 <- my_2D_plot_fun_ggplot("Mean", "Posterior Mean", df, X = X_sub, y = y, dims = dims)
+          p3 <- my_2D_plot_fun_ggplot("Variance", "Posterior Variance", df, X = X_sub, y = y, dims = dims)
         } else {
-          p1 <- my_2D_plot_fun("Mean", "Predictive Mean", df, X = X_sub, y = y, dims= dims)
-          p3 <- my_2D_plot_fun("Variance", "Predictive Variance", df, X = X_sub, y = y, dims= dims)
+          p1 <- my_2D_plot_fun("Mean", "Posterior Mean", df, X = X_sub, y = y, dims= dims)
+          p3 <- my_2D_plot_fun("Variance", "Posterior Variance", df, X = X_sub, y = y, dims= dims)
         }
       }else{
         if (engine == "ggplot") {
-          p1 <- my_2D_plot_fun_ggplot("Mean", "Predictive Mean", df, dims = dims)
-          p3 <- my_2D_plot_fun_ggplot("Variance", "Predictive Variance", df, dims = dims)
+          p1 <- my_2D_plot_fun_ggplot("Mean", "Posterior Mean", df, dims = dims)
+          p3 <- my_2D_plot_fun_ggplot("Variance", "Posterior Variance", df, dims = dims)
         } else {
-          p1 <- my_2D_plot_fun("Mean", "Predictive Mean", df, dims= dims)
-          p3 <- my_2D_plot_fun("Variance", "Predictive Variance", df, dims= dims)
+          p1 <- my_2D_plot_fun("Mean", "Posterior Mean", df, dims= dims)
+          p3 <- my_2D_plot_fun("Variance", "Posterior Variance", df, dims= dims)
         }
       }
       if(is_classification){

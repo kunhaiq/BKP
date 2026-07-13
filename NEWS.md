@@ -1,6 +1,7 @@
-# BKP 0.3.1 (2026-07-03)
+# BKP 0.3.1 (2026-07-13)
 
 - Reordered optional arguments in `fit_BKP()` and `fit_DKP()` to group kernel specification, length-scale settings, loss/ESS options, and optimization controls more consistently. Named-argument usage is unaffected.
+- Updated probability-scale plot labels across `plot.BKP()`, `plot.DKP()`, `plot.TwinBKP()`, and `plot.TwinDKP()` to use “Posterior Mean,” “Posterior Variance,” and “95% Credible Interval” instead of “Predictive Mean,” “Predictive Variance,” and “95% CI.” This change clarifies that these panels summarize posterior uncertainty for the latent probability surface rather than the predictive distribution of future responses.
 
 # BKP 0.3.0 (2026-07-01)
 

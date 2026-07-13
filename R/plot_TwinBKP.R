@@ -333,13 +333,13 @@ plot.TwinBKP <- function(x, only_mean = FALSE, n_grid = 80, dims = NULL,
     if (is_classification) {
       p1 <- make_plot(
         "Mean",
-        "Predicted Class Probability (Predictive Mean)",
+        "Predicted Class Probability (Posterior Mean)",
         overlay_obs = TRUE
       )
     } else {
       p1 <- make_plot(
         "Mean",
-        "TwinBKP Predictive Mean",
+        "TwinBKP Posterior Mean",
         overlay_obs = FALSE
       )
     }
@@ -349,18 +349,18 @@ plot.TwinBKP <- function(x, only_mean = FALSE, n_grid = 80, dims = NULL,
   }
 
   if (is_classification) {
-    p1 <- make_plot("Mean", "TwinBKP Predictive Mean", overlay_obs = TRUE)
-    p3 <- make_plot("Variance", "TwinBKP Predictive Variance", overlay_obs = TRUE)
+    p1 <- make_plot("Mean", "Posterior Mean", overlay_obs = TRUE)
+    p3 <- make_plot("Variance", "Posterior Variance", overlay_obs = TRUE)
 
     gridExtra::grid.arrange(p1, p3, ncol = 2)
   } else {
-    p1 <- make_plot("Mean", "TwinBKP Predictive Mean", overlay_obs = FALSE)
+    p1 <- make_plot("Mean", "Posterior Mean", overlay_obs = FALSE)
     p2 <- make_plot(
       "Upper",
       paste0(prediction$CI_level * 100, "% CI Upper"),
       overlay_obs = FALSE
     )
-    p3 <- make_plot("Variance", "TwinBKP Predictive Variance", overlay_obs = FALSE)
+    p3 <- make_plot("Variance", "Posterior Variance", overlay_obs = FALSE)
     p4 <- make_plot(
       "Lower",
       paste0(prediction$CI_level * 100, "% CI Lower"),

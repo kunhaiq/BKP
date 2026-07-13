@@ -464,7 +464,7 @@ plot.TwinDKP <- function(
         p1 <- if (engine == "ggplot") {
           my_2D_plot_fun_ggplot(
             "Mean",
-            "TwinDKP Predictive Mean",
+            "Posterior Mean",
             df,
             dims = dims,
             X_global = if (has_global) X_global_sub else NULL
@@ -472,7 +472,7 @@ plot.TwinDKP <- function(
         } else {
           my_2D_plot_fun(
             "Mean",
-            "TwinDKP Predictive Mean",
+            "Posterior Mean",
             df,
             dims = dims,
             X_global = if (has_global) X_global_sub else NULL
@@ -483,7 +483,7 @@ plot.TwinDKP <- function(
         if (engine == "ggplot") {
           p1 <- my_2D_plot_fun_ggplot(
             "Mean",
-            "TwinDKP Predictive Mean",
+            "Posterior Mean",
             df,
             dims = dims,
             X_global = if (has_global) X_global_sub else NULL
@@ -497,7 +497,7 @@ plot.TwinDKP <- function(
           )
           p3 <- my_2D_plot_fun_ggplot(
             "Variance",
-            "TwinDKP Predictive Variance",
+            "Posterior Variance",
             df,
             dims = dims,
             X_global = if (has_global) X_global_sub else NULL
@@ -512,7 +512,7 @@ plot.TwinDKP <- function(
         } else {
           p1 <- my_2D_plot_fun(
             "Mean",
-            "TwinDKP Predictive Mean",
+            "Posterior Mean",
             df,
             dims = dims,
             X_global = if (has_global) X_global_sub else NULL
@@ -526,7 +526,7 @@ plot.TwinDKP <- function(
           )
           p3 <- my_2D_plot_fun(
             "Variance",
-            "TwinDKP Predictive Variance",
+            "Posterior Variance",
             df,
             dims = dims,
             X_global = if (has_global) X_global_sub else NULL
