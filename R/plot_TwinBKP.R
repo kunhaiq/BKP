@@ -141,7 +141,7 @@ plot.TwinBKP <- function(x, only_mean = FALSE, n_grid = 80, dims = NULL,
           )
         ) +
         labs(
-          title = "TwinBKP Estimated Probability",
+          title = "Estimated Probability",
           x = ifelse(d > 1, paste0("x", dims), "x"),
           y = "Probability"
         ) +
@@ -203,7 +203,7 @@ plot.TwinBKP <- function(x, only_mean = FALSE, n_grid = 80, dims = NULL,
         lwd = 2,
         xlab = ifelse(d > 1, paste0("x", dims), "x"),
         ylab = "Probability",
-        main = "TwinBKP Estimated Probability",
+        main = "Estimated Probability",
         xlim = Xbounds[dims, ],
         ylim = c(
           max(0, min(prediction$lower) * 0.9),
@@ -339,7 +339,7 @@ plot.TwinBKP <- function(x, only_mean = FALSE, n_grid = 80, dims = NULL,
     } else {
       p1 <- make_plot(
         "Mean",
-        "TwinBKP Posterior Mean",
+        "Posterior Mean",
         overlay_obs = FALSE
       )
     }

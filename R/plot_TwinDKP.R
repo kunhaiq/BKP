@@ -123,7 +123,7 @@ plot.TwinDKP <- function(
           ) +
           scale_color_discrete(name = NULL, labels = paste("Class", seq_len(q))) +
           labs(
-            title = "TwinDKP Estimated Mean Curves (All Classes)",
+            title = "Estimated Mean Curves (All Classes)",
             x = ifelse(d > 1, paste0("x", dims), "x"),
             y = "Probability"
           ) +
@@ -211,7 +211,7 @@ plot.TwinDKP <- function(
             )
           ) +
           labs(
-            title = paste0("TwinDKP Estimated Probability (Class ", j, ")"),
+            title = paste0("Estimated Probability (Class ", j, ")"),
             x = ifelse(d > 1, paste0("x", dims), "x"),
             y = "Probability"
           ) +
@@ -276,7 +276,7 @@ plot.TwinDKP <- function(
           ylim = c(-0.1, 1.1),
           xlab = ifelse(d > 1, paste0("x", dims), "x"),
           ylab = "Probability",
-          main = "TwinDKP Estimated Mean Curves (All Classes)"
+          main = "Estimated Mean Curves (All Classes)"
         )
         for (j in seq_len(q)) {
           lines(Xnew, prediction$mean[, j], col = cols[j], lwd = 2)
@@ -327,7 +327,7 @@ plot.TwinDKP <- function(
           lwd = 2,
           xlab = ifelse(d > 1, paste0("x", dims), "x"),
           ylab = "Probability",
-          main = paste0("TwinDKP Estimated Probability (Class ", j, ")"),
+          main = paste0("Estimated Probability (Class ", j, ")"),
           xlim = Xbounds[dims, ],
           ylim = ylim
         )
@@ -547,7 +547,7 @@ plot.TwinDKP <- function(
           p4,
           ncol = 2,
           top = textGrob(
-            paste0("TwinDKP Estimated Probability (Class ", j, ")"),
+            paste0("Estimated Probability (Class ", j, ")"),
             gp = gpar(fontface = "bold", fontsize = 16)
           )
         )
