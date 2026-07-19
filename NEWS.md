@@ -1,3 +1,7 @@
+# BKP 0.3.2 (2026-07-19)
+
+- docs: add [`BKP-website`](https://jiangyan-zhao.github.io/BKP-website/) links to README
+
 # BKP 0.3.1 (2026-07-13)
 
 - Reordered optional arguments in `fit_BKP()` and `fit_DKP()` to group kernel specification, length-scale settings, loss/ESS options, and optimization controls more consistently. Named-argument usage is unaffected.

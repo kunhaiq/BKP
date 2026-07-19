@@ -30,6 +30,8 @@ location-specific nearest-neighbour updates.
 
 <p align="center">
 
+<a href="https://jiangyan-zhao.github.io/BKP-website/"><strong>Website</strong></a>
+·
 <a href="https://github.com/Jiangyan-Zhao/BKP-paper/blob/master/paper/TR_BKP.pdf"><strong>Software
 paper</strong></a> ·
 <a href="https://github.com/Jiangyan-Zhao/BKP-paper"><strong>Reproducibility
@@ -252,19 +254,22 @@ twindkp_fit <- fit_TwinDKP(
 
 ## Documentation and reproducibility
 
-The statistical foundations, implementation details, and worked examples
-are available in:
+The main project resources are available through the following entry
+points:
 
+- [**BKP website**](https://jiangyan-zhao.github.io/BKP-website/) —
+  interactive overview, installation guide, methodology, examples, and
+  project resources.
 - [**BKP software paper
   (PDF)**](https://github.com/Jiangyan-Zhao/BKP-paper/blob/master/paper/TR_BKP.pdf)
+  — statistical foundations, package design, and worked examples.
 - [**BKP-paper reproducibility
-  repository**](https://github.com/Jiangyan-Zhao/BKP-paper)
+  repository**](https://github.com/Jiangyan-Zhao/BKP-paper) — manuscript
+  source files, analysis scripts, data-processing code, slides, and
+  reproducibility materials.
 - [**Package reference manual on
-  CRAN**](https://cran.r-project.org/package=BKP)
-
-The reproducibility repository contains the manuscript source files,
-analysis scripts, data-processing code, and materials used to generate
-the examples and figures in the software paper.
+  CRAN**](https://cran.r-project.org/package=BKP) — function
+  documentation for the current CRAN release.
 
 ## Citing BKP
 
