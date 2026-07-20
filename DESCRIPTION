@@ -20,7 +20,7 @@ Description: Implements the Beta Kernel Process (BKP) for nonparametric modeling
  For more details, see Zhao, Qing, and Xu (2025) <doi:10.48550/arXiv.2508.10447>.
 License: GPL (>= 3)
 Copyright: See inst/COPYRIGHTS
-URL: https://github.com/Jiangyan-Zhao/BKP, https://github.com/Jiangyan-Zhao/BKP-paper
+URL: https://github.com/Jiangyan-Zhao/BKP, https://jiangyan-zhao.github.io/BKP-website, https://github.com/Jiangyan-Zhao/BKP-paper
 BugReports: https://github.com/Jiangyan-Zhao/BKP/issues
 Encoding: UTF-8
 NeedsCompilation: yes
