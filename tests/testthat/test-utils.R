@@ -134,3 +134,32 @@ test_that("C++ leave-one-out Shepard interpolation matches reference R implement
 
   expect_equal(bkp_shepard_m_loo(X, m), ref)
 })
+
+test_that("check_Xnew formats vectors and matrices", {
+  # NULL passes through unchanged
+  expect_null(check_Xnew(NULL, d = 1L))
+
+  # 1D model: a numeric vector becomes an n x 1 matrix
+  v <- c(0.1, 0.2, 0.3)
+  expect_equal(check_Xnew(v, d = 1L), matrix(v, ncol = 1L))
+
+  # d > 1: a numeric vector is a single location
+  v <- c(0.1, 0.2)
+  expect_equal(check_Xnew(v, d = 2L), matrix(v, nrow = 1L))
+
+  # Matrices and data frames are coerced to numeric matrices
+  m <- matrix(c(0.1, 0.2, 0.3, 0.4), ncol = 2)
+  expect_equal(check_Xnew(m, d = 2L), m)
+  expect_equal(check_Xnew(as.data.frame(m), d = 2L), m, ignore_attr = "dimnames")
+})
+
+test_that("check_Xnew rejects invalid inputs", {
+  expect_error(check_Xnew(data.frame(a = c("x", "y"), b = c(1, 2)), d = 2L),
+               "'Xnew' must be numeric")
+  expect_error(check_Xnew(matrix(1:4, ncol = 2), d = 3L),
+               "must match the original input dimension")
+  expect_error(check_Xnew(matrix(c(NA, 1), ncol = 1), d = 1L),
+               "no NA, NaN, or Inf")
+  expect_error(check_Xnew(matrix(c(1, Inf), ncol = 1), d = 1L),
+               "no NA, NaN, or Inf")
+})

@@ -568,6 +568,55 @@ bkp_check_unique_locations <- function(Xnorm) {
   invisible(TRUE)
 }
 
+#' Check and format new input locations
+#'
+#' Internal validation helper shared by the \code{predict} and \code{simulate}
+#' methods. It coerces \code{Xnew} to a numeric matrix with one column per model
+#' input dimension, and validates its contents. A plain numeric vector is
+#' treated as a column of locations for one-dimensional models, and as a single
+#' location for models with more than one dimension.
+#'
+#' @param Xnew New input locations: \code{NULL}, a numeric vector, matrix, or
+#'   data frame.
+#' @param d Positive integer giving the number of input dimensions of the
+#'   fitted model.
+#'
+#' @return A numeric matrix with one row per location and one column per input
+#'   dimension, or \code{NULL} when \code{Xnew} is \code{NULL}.
+#'
+#' @keywords internal
+
+check_Xnew <- function(Xnew, d) {
+  if (is.null(Xnew)) {
+    return(NULL)
+  }
+
+  if (is.null(dim(Xnew))) {
+    Xnew <- if (d == 1L) {
+      matrix(Xnew, ncol = 1L)
+    } else {
+      matrix(Xnew, nrow = 1L)
+    }
+  } else {
+    Xnew <- as.matrix(Xnew)
+  }
+
+  if (!is.numeric(Xnew)) {
+    stop("'Xnew' must be numeric.")
+  }
+  if (nrow(Xnew) < 1L || ncol(Xnew) < 1L) {
+    stop("'Xnew' must have at least one row and one column.")
+  }
+  if (ncol(Xnew) != d) {
+    stop("The number of columns in 'Xnew' must match the original input dimension.")
+  }
+  if (anyNA(Xnew) || any(!is.finite(Xnew))) {
+    stop("'Xnew' must contain only finite values with no NA, NaN, or Inf.")
+  }
+
+  Xnew
+}
+
 #' Interpolate trial sizes using Shepard weights
 #'
 #' Internal helper used by optional Shepard ESS calibration. It interpolates

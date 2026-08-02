@@ -74,30 +74,7 @@ predict.DKP <- function(object, Xnew = NULL, CI_level = 0.95,
   d <- ncol(X)
 
   # ---- Check and format Xnew ----
-  if (!is.null(Xnew)) {
-    if (is.null(dim(Xnew))) {
-      if (d == 1L) {
-        Xnew <- matrix(Xnew, ncol = 1L)
-      } else {
-        Xnew <- matrix(Xnew, nrow = 1L)
-      }
-    } else {
-      Xnew <- as.matrix(Xnew)
-    }
-
-    if (!is.numeric(Xnew)) {
-      stop("'Xnew' must be numeric.")
-    }
-    if (nrow(Xnew) < 1L || ncol(Xnew) < 1L) {
-      stop("'Xnew' must have at least one row and one column.")
-    }
-    if (ncol(Xnew) != d) {
-      stop("The number of columns in 'Xnew' must match the original input dimension.")
-    }
-    if (anyNA(Xnew) || any(!is.finite(Xnew))) {
-      stop("'Xnew' must contain only finite values with no NA, NaN, or Inf.")
-    }
-  }
+  Xnew <- check_Xnew(Xnew, d)
   n_pred <- if (is.null(Xnew)) nrow(X) else nrow(Xnew)
 
   # ---- Check scalar probability arguments ----

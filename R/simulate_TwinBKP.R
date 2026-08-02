@@ -18,33 +18,6 @@ simulate.TwinBKP <- function(object, nsim = 1, seed = NULL,
     stop("`seed` must be a single integer or NULL.")
   }
 
-  d <- ncol(object$X)
-
-  if (!is.null(Xnew)) {
-    if (is.null(dim(Xnew))) {
-      if (d == 1L) {
-        Xnew <- matrix(Xnew, ncol = 1L)
-      } else {
-        Xnew <- matrix(Xnew, nrow = 1L)
-      }
-    } else {
-      Xnew <- as.matrix(Xnew)
-    }
-
-    if (!is.numeric(Xnew)) {
-      stop("'Xnew' must be numeric.")
-    }
-    if (nrow(Xnew) < 1L || ncol(Xnew) < 1L) {
-      stop("'Xnew' must have at least one row and one column.")
-    }
-    if (ncol(Xnew) != d) {
-      stop("The number of columns in 'Xnew' must match the original input dimension.")
-    }
-    if (anyNA(Xnew) || any(!is.finite(Xnew))) {
-      stop("'Xnew' must contain only finite values with no NA, NaN, or Inf.")
-    }
-  }
-
   if (!is.null(threshold)) {
     if (!is.numeric(threshold) || length(threshold) != 1L ||
         is.na(threshold) || !is.finite(threshold) ||
