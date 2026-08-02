@@ -25,7 +25,7 @@ BugReports: https://github.com/Jiangyan-Zhao/BKP/issues
 Encoding: UTF-8
 NeedsCompilation: yes
 Roxygen: list(markdown = TRUE)
-Depends: R (>= 3.5.0)
+Depends: R (>= 4.1.0)
 Imports: dirmult, ggplot2, gridExtra, lattice, nloptr, rlang, Rcpp, tgp
 Suggests: knitr, mlbench, testthat (>= 3.0.0)
 Config/testthat/edition: 3
